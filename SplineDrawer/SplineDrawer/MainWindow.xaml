@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SplineDrawer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="Spline" Height="350" Width="525">
     <Grid>
-        
+        <Canvas x:Name="mainCanvas" Background="#FFD6D1D1" KeyDown="mainCanvas_KeyDown" Loaded="mainCanvas_Loaded" MouseDown="mainCanvas_MouseDown"/>
+
     </Grid>
 </Window>
