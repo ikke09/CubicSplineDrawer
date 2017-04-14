@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SplineDrawer</RootNamespace>
     <AssemblyName>SplineDrawer</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -36,11 +36,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Math_Collection">
-      <HintPath>..\..\..\Math_Collection.dll</HintPath>
+    <Reference Include="Math_Collection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Math_Collection\Math_Collection\Math_Collection\bin\Debug\Math_Collection.dll</HintPath>
     </Reference>
-    <Reference Include="RuntimeFunctionParser">
-      <HintPath>..\..\..\RuntimeFunctionParser.dll</HintPath>
+    <Reference Include="RuntimeFunctionParser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\Runtime_Compiled_Function_Parser\RuntimeFunctionParser\RuntimeFunctionParser\bin\Release\RuntimeFunctionParser.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />

@@ -100,7 +100,7 @@ namespace SplineDrawer
 
         private void CalculateAndRenderSpline()
         {
-            _spline = new Spline(_inputPoints);
+			_spline = new Spline(_inputPoints);
             RenderSpline(_spline);
         }
 
