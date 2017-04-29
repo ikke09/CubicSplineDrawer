@@ -37,12 +37,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Math_Collection, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Math_Collection\Math_Collection\Math_Collection\bin\Debug\Math_Collection.dll</HintPath>
+      <HintPath>..\packages\Math_Collection.0.1.0\lib\Math_Collection.dll</HintPath>
     </Reference>
     <Reference Include="RuntimeFunctionParser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\Runtime_Compiled_Function_Parser\RuntimeFunctionParser\RuntimeFunctionParser\bin\Release\RuntimeFunctionParser.dll</HintPath>
+      <HintPath>..\packages\RuntimeFunctionParser.0.0.8\lib\RuntimeFunctionParser.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -96,6 +94,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

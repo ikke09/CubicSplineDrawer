@@ -1,42 +1,59 @@
-﻿using Math_Collection.LGS;
-using Math_Collection.LinearAlgebra.Matrices;
+﻿using Math_Collection.LinearAlgebra.Matrices;
 using RuntimeFunctionParser;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System;
+using Math_Collection.LGS;
 
 namespace SplineDrawer
 {
 	internal class Spline
-    {
-        private SortedList<double,double> _sourcePoints { get; set; }
+	{
+		private SortedList<double, double> _sourcePoints { get; set; }
 
-        private List<Function> _partialPolynomials;
-        public List<Function> PartialPolynomials
-        {
-            get { return _partialPolynomials; }
-            set { _partialPolynomials = value; }
-        }
+		private List<Function> _partialPolynomials;
+		public List<Function> PartialPolynomials
+		{
+			get { return _partialPolynomials; }
+			set { _partialPolynomials = value; }
+		}
 
-        public Spline()
-        {
-            _sourcePoints = new SortedList<double, double>();
-            PartialPolynomials = new List<Function>();
-        }
+		/// <summary>
+		/// Returns the amount of spline parts
+		/// </summary>
+		private int _amountOfSplineParts
+		{
+			get
+			{
+				return _sourcePoints.Count - 1;
+			}
+		}
 
-        public Spline(List<Point> points)
-        {
-            _sourcePoints = new SortedList<double, double>();
+		public Spline()
+		{
+			_sourcePoints = new SortedList<double, double>();
+			PartialPolynomials = new List<Function>();
+		}
+
+		public Spline(List<Point> points)
+		{
+			_sourcePoints = new SortedList<double, double>();
 			points.ForEach(p => _sourcePoints.Add(p.X, p.Y));
-            PartialPolynomials = CalculateSplineParts();
-        }
+			PartialPolynomials = CalculateSplineParts();
+		}
 
-        private List<Function> CalculateSplineParts()
-        {
-            if (_sourcePoints != null && _sourcePoints.Count < 3)
-            {
-                return null;
-            }
+		/// <summary>
+		/// Calculates all polynominal parts of the spline
+		/// </summary>
+		/// <returns>A List of Functions that represents all polynominals</returns>
+		/// <seealso cref="http://www.tm-mathe.de/Themen/html/funnatsplines.html"/>
+		private List<Function> CalculateSplineParts()
+		{
+			if (_sourcePoints != null && _sourcePoints.Count < 3)
+			{
+				return null;
+			}
 
 			// 3.Degree Polynomial := f(x) = a + bx + cx^2 + dx^3 
 			// f'(x) = b + 2cx + 3dx^2
@@ -44,67 +61,75 @@ namespace SplineDrawer
 
 			Parser parser = new Parser();
 
-			int n = _sourcePoints.Count;
-
 			double[] xs = _sourcePoints.Keys.ToArray();
 			double[] ys = _sourcePoints.Values.ToArray();
-			
-			#region Calculate Help Variable hi
 
-			// hi = xi+1 - xi
-			double[] hi = CalculateH(xs, n);
+			#region Calculate Help Variable hi and gi
 
-			#endregion
+			double[] hi = CalculateH(xs);
 
-			#region Calculates all d values
-
-			// a's = yi
-			double[] ai = ys;
+			double[] gi = CalcualteG(ys, hi);
 
 			#endregion
 
 			#region Calculate all c's
 
-			Matrix coefficientMatrix = GetCoefficientMatrix(hi, n);
-			Math_Collection.LinearAlgebra.Vectors.Vector coefficientVector = GetCoefficientVector(hi, ys, n);
+			Matrix coefficientMatrix = GetCoefficientMatrix(hi);
+			Math_Collection.LinearAlgebra.Vectors.Vector coefficientVector = GetCoefficientVector(gi);
 			LGS lgs = new LGS(coefficientMatrix, coefficientVector);
 
-			Math_Collection.LinearAlgebra.Vectors.Vector resultFromLGS = lgs.Solve(LGS.SolveAlgorithm.Gauß);
+			Math_Collection.LinearAlgebra.Vectors.Vector resultFromLGS = lgs.Solve(Math_Collection.Enums.ESolveAlgorithm.eGauß);
 
-			Math_Collection.LinearAlgebra.Vectors.Vector ci = CopyTo(resultFromLGS, 1, resultFromLGS.Size + 2);
+			double[] ci = new double[_amountOfSplineParts + 2];
+			for (int i = 2; i <= _amountOfSplineParts + 1; i++)
+			{
+				ci[i] = resultFromLGS[i - 1];
+			}
 
-			// Natural Spline Condition
-			ci[0] = 0;
-			ci[ci.Size - 1] = 0;
+			#endregion
+
+			#region Calculates all a values
+
+			// a's = yi-1
+			double[] ai = new double[_amountOfSplineParts + 1];
+			for (int i = 1; i <= _amountOfSplineParts; i++)
+			{
+				ai[i] = ys[i - 1];
+			}
+
 			#endregion
 
 			#region Calculate all b's
 
-			double[] bi = new double[n - 1];
-			for(int i = 0; i < n-1; i++)
+			// bi = (yi - yi-1) / hi - (hi / 3) * (2*ci + ci+1)
+
+			double[] bi = new double[_amountOfSplineParts + 1];
+			for (int i = 1; i <= _amountOfSplineParts; i++)
 			{
-				bi[i] = ((ys[i + 1] - ys[i] / hi[i]) - ((hi[i] / 3) * (2 * ci[i] + ci[i + 1])));
+				bi[i] = ((ys[i] - ys[i - 1]) / hi[i]) - (hi[i] / 3) * (2 * ci[i] + ci[i + 1]);
 			}
 
 			#endregion
 
 			#region Calculate all d's
 
-			double[] di = new double[n - 1];
-			for(int i = 0; i < n - 1; i++)
+			// di = (ci+1 - ci) / 3 * hi
+
+			double[] di = new double[_amountOfSplineParts + 1];
+			for (int i = 1; i <= _amountOfSplineParts; i++)
 			{
-				di[i] = (1 / (3 * hi[i])) * (ci[i + 1] - ci[i]);
+				di[i] = (ci[i + 1] - ci[i]) / (3 * hi[i]);
 			}
 
 			#endregion
 
 			#region Generate all Functions
 
-			Function[] functionParts = new Function[n];
-			for(int i = 0; i< n-1; i++)
+			Function[] functionParts = new Function[_amountOfSplineParts];
+			for (int i = 1; i <= _amountOfSplineParts; i++)
 			{
 				string f = ai[i] + "+" + bi[i] + "*x+" + ci[i] + "*x^2+" + di[i] + "*x^3";
-				functionParts[i] = parser.ParseFunction(f);
+				functionParts[i - 1] = parser.ParseFunction(f);
 			}
 
 			#endregion
@@ -112,33 +137,60 @@ namespace SplineDrawer
 			return functionParts.ToList();
 		}
 
-		private double[] CalculateH(double[] xValues, int n)
+		/// <summary>
+		/// Calculates the help variable g
+		/// gj = 3 * ((yj - yj-1)/hj - (yj-1-yj-2)/hj-1)  
+		/// </summary>
+		/// <param name="ys"></param>
+		/// <param name="hi"></param>
+		/// <returns></returns>
+		private double[] CalcualteG(double[] ys, double[] hi)
 		{
-			double[] hi = new double[n - 1];
-			for (int i = 1; i < n; i++)
-				hi[i - 1] = xValues[i] - xValues[i - 1];
+			double[] gi = new double[_amountOfSplineParts + 1];
+			gi[0] = 0;
+			gi[1] = 0;
+			for (int i = 2; i <= _amountOfSplineParts; i++)
+				gi[i] = 3 * ((ys[i] - ys[i - 1]) / hi[i] - (ys[i - 1] - ys[i - 2]) / hi[i - 1]);
+
+			return gi;
+		}
+
+		/// <summary>
+		/// Calculates the help variable hi
+		/// hi = xi - xi-1
+		/// </summary>
+		/// <param name="xValues">all x values from the points</param>
+		/// <param name="n"></param>
+		/// <returns></returns>
+		private double[] CalculateH(double[] xValues)
+		{
+			double[] hi = new double[_amountOfSplineParts + 1];
+			hi[0] = 0;
+			for (int i = 1; i <= _amountOfSplineParts; i++)
+				hi[i] = xValues[i] - xValues[i - 1];
 
 			return hi;
 		}
 
-		private Matrix GetCoefficientMatrix(double[] h, int n)
+		private Matrix GetCoefficientMatrix(double[] h)
 		{
-			Matrix m = new Matrix(new double[n - 2, n - 2]);
-
+			Matrix m = new Matrix(new double[_amountOfSplineParts + 1, _amountOfSplineParts + 1]);
+			m[0, 0] = 1;
 			// Diagnal
-			for (int i = 0; i < m.RowCount; i++)
+			for (int i = 2; i < m.RowCount; i++)
 			{
-				m[i, i] = 2 * (h[i] + h[i + 1]);
+				m[i - 1, i - 1] = 2 * (h[i - 1] + h[i]);
 			}
+			m[m.RowCount - 1, m.ColumnCount - 1] = 1;
 
 			// Under Diagonal
-			for (int k = 1; k < m.ColumnCount; k++)
+			for (int k = 2; k < m.ColumnCount - 1; k++)
 			{
 				m[k - 1, k] = h[k];
 			}
 
 			// Abover Diagonal
-			for (int o = 1; o < m.RowCount; o++)
+			for (int o = 2; o < m.RowCount - 1; o++)
 			{
 				m[o, o - 1] = h[o];
 			}
@@ -146,17 +198,15 @@ namespace SplineDrawer
 			return m;
 		}
 
-		private Math_Collection.LinearAlgebra.Vectors.Vector GetCoefficientVector(double[] h, double[] y, int n)
+		private Math_Collection.LinearAlgebra.Vectors.Vector GetCoefficientVector(double[] gi)
 		{
-			Math_Collection.LinearAlgebra.Vectors.Vector v = new Math_Collection.LinearAlgebra.Vectors.Vector(new double[n-2]);
-			
-			for (int i = 1; i <= v.Size; i++)
+			Math_Collection.LinearAlgebra.Vectors.Vector v = new Math_Collection.LinearAlgebra.Vectors.Vector(new double[_amountOfSplineParts + 1]);
+			for (int i = 2; i <= _amountOfSplineParts; i++)
 			{
-				v[i-1] = 6 * ((y[i + 1] - y[i]) / h[i] - (y[i] - y[i - 1]) / h[i - 1]);
+				v[i - 1] = gi[i];
 			}
 
 			return v;
-
 		}
 
 		private Math_Collection.LinearAlgebra.Vectors.Vector CopyTo(Math_Collection.LinearAlgebra.Vectors.Vector v, int startIndex, int sizeForNewArray)

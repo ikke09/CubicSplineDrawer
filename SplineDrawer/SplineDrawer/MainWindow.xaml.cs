@@ -16,124 +16,145 @@ using System.Windows.Shapes;
 
 namespace SplineDrawer
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
-    {
-        private List<Point> _inputPoints;
-        private Spline _spline;
-        public MainWindow()
-        {
-            InitializeComponent();
-            _inputPoints = new List<Point>();
-            _spline = null;
-        }
+	/// <summary>
+	/// Interaction logic for MainWindow.xaml
+	/// </summary>
+	public partial class MainWindow : Window
+	{
+		private List<Point> _inputPoints;
+		private Spline _spline;
+		private const int _scale = 5;
+		public MainWindow()
+		{
+			InitializeComponent();
+			_inputPoints = new List<Point>();
+			_spline = null;
+		}
 
-        #region Render Functions
+		#region Render Functions
 
-        private void RenderSpline(Spline s)
-        {
-            if (s == null || s.PartialPolynomials.Count == 0)
-                return;
+		private void RenderSpline(Spline s)
+		{
+			if (s == null || s.PartialPolynomials.Count == 0)
+				return;
 
-            foreach (Function f in s.PartialPolynomials)
-            {
-                RenderFunction(f);
-            }
-        }
+			for (int i = 0; i < s.PartialPolynomials.Count; i++)
+			{
+				RenderFunction(s.PartialPolynomials[i], _inputPoints[i].X, _inputPoints[i + 1].X);
+			}
+		}
 
-        private void RenderPoints(List<Point> points)
-        {
-            foreach (Point p in points)
-            {
-                Ellipse e = new Ellipse();
-                e.Width = e.Height = 6;
-                e.Margin = new Thickness(p.X, p.Y, 0, 0);
-                e.Fill = Brushes.Black;
-                e.Stroke = Brushes.White;
-                e.StrokeThickness = 1;
-                mainCanvas.Children.Add(e);
-            }
-        }
+		private void RenderPoints(List<Point> points)
+		{
+			foreach (Point p in points)
+			{
+				Ellipse e = new Ellipse();
+				e.Width = e.Height = 6;
+				e.Margin = new Thickness(p.X, p.Y, 0, 0);
+				e.Fill = Brushes.Black;
+				e.Stroke = Brushes.White;
+				e.StrokeThickness = 1;
+				mainCanvas.Children.Add(e);
+			}
+		}
 
-        private void RenderFunction(Function f)
-        {
-            if (f == null)
-                return;
+		private void RenderFunction(Function f, double minX, double maxX)
+		{
+			if (f == null)
+				return;
 
-            double minX = double.MaxValue;
-            double maxX = double.MinValue;
-            foreach (Point p in _inputPoints)
-            {
-                if (p.X > maxX)
-                    maxX = p.X;
+			double step = ((maxX - minX) / _inputPoints.Count) * 0.1;
+			Polyline pl = new Polyline();
+			pl.Stroke = Brushes.Red;
+			pl.StrokeThickness = 3;
+			PointCollection pc = new PointCollection();
+			for (double i = minX; i <= maxX; i += step)
+			{
+				Point p = new Point(i* _scale, f.Solve(i, 0)* _scale);
+				pc.Add(p);
+			}
+			pl.Points = pc;
+			mainCanvas.Children.Add(pl);
+		}
 
-                if (p.X < minX)
-                    minX = p.X;
-            }
+		#endregion
 
-            double step = ((maxX - minX) / _inputPoints.Count) * 0.5;
-            Polyline pl = new Polyline();
-            pl.Stroke = Brushes.Red;
-            pl.StrokeThickness = 3;
-            PointCollection pc = new PointCollection();
-            for (double i = minX; i <= maxX; i += step)
-            {
-                Point p = new Point(i, f.Solve(i, 0));
-                pc.Add(p);
-            }
-            pl.Points = pc;
-            mainCanvas.Children.Add(pl);
-        }
+		#region Helper Functions
 
-        #endregion
+		private void Reset()
+		{
+			mainCanvas.Children.Clear();
+			_inputPoints.Clear();
+			_spline = null;
+		}
 
-        #region Helper Functions
+		private void CalculateAndRenderSpline()
+		{
+			// DEBUG
+			_inputPoints = new List<Point>();
+			_inputPoints.Add(new Point(1, 8));
+			_inputPoints.Add(new Point(7, 10));
+			_inputPoints.Add(new Point(12, 7));
+			_inputPoints.Add(new Point(15, 8));
+			_inputPoints.Add(new Point(19, 7));
+			// 
 
-        private void Reset()
-        {
-            mainCanvas.Children.Clear();
-            _inputPoints.Clear();
-            _spline = null;
-        }
-
-        private void CalculateAndRenderSpline()
-        {
 			_spline = new Spline(_inputPoints);
-            RenderSpline(_spline);
-        }
+			RenderSpline(_spline);
+		}
 
-        #endregion
+		private List<Point> NormalizePoints(List<Point> points)
+		{
+			List<Point> normalizedPoints = new List<Point>(points.Count);
+			foreach(Point p in points)
+			{
+				Point normalized = new Point(p.X / mainCanvas.ActualWidth, p.Y / mainCanvas.ActualHeight);
+				normalizedPoints.Add(normalized);
+			}
+			return normalizedPoints;
+		}
 
-        #region Canvas Events
+		private List<Point> UnnormalizePoints(List<Point> points)
+		{
+			List<Point> unnormalizedPoints = new List<Point>(points.Count);
+			foreach (Point p in points)
+			{
+				Point unnormalized = new Point(p.X * mainCanvas.ActualWidth, p.Y * mainCanvas.ActualHeight);
+				unnormalizedPoints.Add(unnormalized);
+			}
+			return unnormalizedPoints;
+		}
 
-        private void mainCanvas_KeyDown(object sender, KeyEventArgs e)
-        {
-            switch (e.Key)
-            {
-                case Key.Enter:
-                    CalculateAndRenderSpline();
-                    break;
-                case Key.R:
-                    Reset();
-                    break;
-            }
-        }
+		#endregion
 
-        private void mainCanvas_Loaded(object sender, RoutedEventArgs e)
-        {
-            mainCanvas.Focusable = true;
-            mainCanvas.Focus();
-        }
+		#region Canvas Events
 
-        private void mainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            Point p = e.GetPosition(mainCanvas);
-            _inputPoints.Add(p);
-            RenderPoints(_inputPoints);
-        }
+		private void mainCanvas_KeyDown(object sender, KeyEventArgs e)
+		{
+			switch (e.Key)
+			{
+				case Key.Enter:
+					CalculateAndRenderSpline();
+					break;
+				case Key.R:
+					Reset();
+					break;
+			}
+		}
 
-        #endregion
-    }
+		private void mainCanvas_Loaded(object sender, RoutedEventArgs e)
+		{
+			mainCanvas.Focusable = true;
+			mainCanvas.Focus();
+		}
+
+		private void mainCanvas_MouseDown(object sender, MouseButtonEventArgs e)
+		{
+			Point p = e.GetPosition(mainCanvas);
+			_inputPoints.Add(p);
+			RenderPoints(_inputPoints);
+		}
+
+		#endregion
+	}
 }
