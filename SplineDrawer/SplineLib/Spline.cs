@@ -1,14 +1,13 @@
-﻿using Math_Collection.LinearAlgebra.Matrices;
+﻿using Math_Collection.LinearAlgebra;
+using Math_Collection.LinearAlgebra.Matrices;
 using RuntimeFunctionParser;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
-using System;
-using Math_Collection.LGS;
 
-namespace SplineDrawer
+namespace SplineLib
 {
-	internal class Spline
+	public class Spline
 	{
 		private SortedList<double, double> _sourcePoints { get; set; }
 
@@ -78,7 +77,7 @@ namespace SplineDrawer
 			Math_Collection.LinearAlgebra.Vectors.Vector coefficientVector = GetCoefficientVector(gi);
 			LGS lgs = new LGS(coefficientMatrix, coefficientVector);
 
-			Math_Collection.LinearAlgebra.Vectors.Vector resultFromLGS = lgs.Solve(Math_Collection.Enums.ESolveAlgorithm.eGauß);
+			Math_Collection.LinearAlgebra.Vectors.Vector resultFromLGS = lgs.Solve(Math_Collection.Enums.ESolveAlgorithm.eGaussianElimination);
 
 			double[] ci = new double[_amountOfSplineParts + 2];
 			for (int i = 2; i <= _amountOfSplineParts + 1; i++)

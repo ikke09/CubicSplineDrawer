@@ -1,17 +1,10 @@
 ﻿using RuntimeFunctionParser;
-using System;
+using SplineLib;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace SplineDrawer
@@ -22,7 +15,7 @@ namespace SplineDrawer
 	public partial class MainWindow : Window
 	{
 		private List<Point> _inputPoints;
-		private Spline _spline;
+		internal Spline _spline;
 		private const int _scale = 5;
 		public MainWindow()
 		{
@@ -70,7 +63,7 @@ namespace SplineDrawer
 			PointCollection pc = new PointCollection();
 			for (double i = minX; i <= maxX; i += step)
 			{
-				Point p = new Point(i* _scale, f.Solve(i, 0)* _scale);
+				Point p = new Point(i * _scale, f.Solve(i, 0) * _scale);
 				pc.Add(p);
 			}
 			pl.Points = pc;
@@ -90,15 +83,6 @@ namespace SplineDrawer
 
 		private void CalculateAndRenderSpline()
 		{
-			// DEBUG
-			_inputPoints = new List<Point>();
-			_inputPoints.Add(new Point(1, 8));
-			_inputPoints.Add(new Point(7, 10));
-			_inputPoints.Add(new Point(12, 7));
-			_inputPoints.Add(new Point(15, 8));
-			_inputPoints.Add(new Point(19, 7));
-			// 
-
 			_spline = new Spline(_inputPoints);
 			RenderSpline(_spline);
 		}
@@ -106,7 +90,7 @@ namespace SplineDrawer
 		private List<Point> NormalizePoints(List<Point> points)
 		{
 			List<Point> normalizedPoints = new List<Point>(points.Count);
-			foreach(Point p in points)
+			foreach (Point p in points)
 			{
 				Point normalized = new Point(p.X / mainCanvas.ActualWidth, p.Y / mainCanvas.ActualHeight);
 				normalizedPoints.Add(normalized);
